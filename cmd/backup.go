@@ -45,7 +45,8 @@ func init() {
 }
 
 func performBackup(src, dest string, number int) error {
-    timestamp := time.Now().Format("20240101120030")
+	//Timestampは下記指定じゃないとフォーマットが認識されない
+    timestamp := time.Now().Format("20060102150405")
     tarName := fmt.Sprintf("%s.tgz", timestamp)
 
     tarPath := filepath.Join(dest, tarName)
