@@ -6,6 +6,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -13,28 +18,66 @@ import (
 // backupCmd represents the backup command
 var backupCmd = &cobra.Command{
 	Use:   "backup",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Source directory to backup and archive to destination directory",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("backup called")
+		fmt.Println("Backup Started...")
+		fmt.Println("BackupSrc:", src)
+		fmt.Println("BackupDest:", dest)
+		if err:= performBackup(src, dest, number); err != nil {
+			fmt.Println(os.Stderr, "Error:", err)
+		}
+		fmt.Println("Backup Completed...")
 	},
 }
+
+var src, dest string
+var number int
 
 func init() {
 	rootCmd.AddCommand(backupCmd)
 
-	// Here you will define your flags and configuration settings.
+	backupCmd.Flags().StringVarP(&src, "src", "s", "", "Source directory to backup")
+	backupCmd.Flags().StringVarP(&dest, "dest", "d", "", "Destination directory for backup")
+	//backupCmd.Flags().IntVarP(&number, "number", "n", 7, "Number of backups to keep")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// backupCmd.PersistentFlags().String("foo", "", "A help for foo")
+	backupCmd.MarkFlagRequired("src")
+	backupCmd.MarkFlagRequired("dest")
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// backupCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func performBackup(src, dest string, number int) error {
+    timestamp := time.Now().Format("20240101120030")
+    tarName := fmt.Sprintf("%s.tgz", timestamp)
+
+    tarPath := filepath.Join(dest, tarName)
+    cmd := exec.Command("tar", "-cvzf", tarPath, src)
+    if err := cmd.Run(); err != nil {
+		fmt.Println(os.Stderr, "Error running tar command:", err)
+        return err
+    }
+
+    //return removeOldBackups(dest, number)
+	return nil
+}
+
+func removeOldBackups(dest string, number int) error {
+    files, err := filepath.Glob(filepath.Join(dest, "*.tgz"))
+    if err != nil {
+        return err
+    }
+
+    if len(files) <= number {
+        return nil
+    }
+
+    sort.Slice(files, func(i, j int) bool {
+        return files[i] < files[j]
+    })
+
+    for _, file := range files[:len(files)-number] {
+        if err := os.Remove(file); err != nil {
+            return err
+        }
+    }
+
+    return nil
 }
