@@ -1,7 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -15,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// backupCmd represents the backup command
 var backupCmd = &cobra.Command{
 	Use:   "backup",
 	Short: "Source directory to backup and archive to destination directory",
@@ -38,7 +33,7 @@ func init() {
 
 	backupCmd.Flags().StringVarP(&src, "src", "s", "", "Source directory to backup")
 	backupCmd.Flags().StringVarP(&dest, "dest", "d", "", "Destination directory for backup")
-	//backupCmd.Flags().IntVarP(&number, "number", "n", 7, "Number of backups to keep")
+	backupCmd.Flags().IntVarP(&number, "number", "n", 7, "Number of backups to keep")
 
 	backupCmd.MarkFlagRequired("src")
 	backupCmd.MarkFlagRequired("dest")
@@ -56,8 +51,7 @@ func performBackup(src, dest string, number int) error {
 		return err
 	}
 
-	//return removeOldBackups(dest, number)
-	return nil
+	return removeOldBackups(dest, number)
 }
 
 func removeOldBackups(dest string, number int) error {
@@ -70,15 +64,30 @@ func removeOldBackups(dest string, number int) error {
 		return nil
 	}
 
-	sort.Slice(files, func(i, j int) bool {
-		return files[i] < files[j]
+	type fileInfo struct {
+		path string
+		modTime time.Time
+	}
+
+	var fileDetails []fileInfo
+	for _, file := range files {
+		info, err := os.Stat(file)
+		if err != nil {
+			return err
+		}
+		fileDetails = append(fileDetails, fileInfo{file, info.ModTime()})
+	}
+
+	sort.Slice(fileDetails, func(i, j int) bool {
+		return fileDetails[i].modTime.Before(fileDetails[j].modTime)
 	})
 
-	for _, file := range files[:len(files)-number] {
-		if err := os.Remove(file); err != nil {
+	for i := 0; i < len(fileDetails) - number; i++ {
+		if err := os.Remove(fileDetails[i].path); err != nil {
 			return err
 		}
 	}
 
+	fmt.Println("Removed old backups")
 	return nil
 }
