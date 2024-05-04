@@ -1,10 +1,14 @@
 Simbal
 ===
 
-(WIP)  
 Simbal is the Simple Backup Launcher tool.
+- Backup dirs(files) to specified dirs with tar command.
+- Archive backup dirs(files) with gzip(tar -z option).
+- Generational management of backup files.
 
 ### Usage
+
+Simple tar archive.
 
 ```sh
 $ simbal backup -s /tmp/test -d /tmp/backup
