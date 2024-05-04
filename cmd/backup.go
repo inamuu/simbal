@@ -46,39 +46,39 @@ func init() {
 
 func performBackup(src, dest string, number int) error {
 	//Timestampは下記指定じゃないとフォーマットが認識されない
-    timestamp := time.Now().Format("20060102150405")
-    tarName := fmt.Sprintf("%s.tgz", timestamp)
+	timestamp := time.Now().Format("20060102150405")
+	tarName := fmt.Sprintf("%s.tgz", timestamp)
 
-    tarPath := filepath.Join(dest, tarName)
-    cmd := exec.Command("tar", "-cvzf", tarPath, src)
-    if err := cmd.Run(); err != nil {
+	tarPath := filepath.Join(dest, tarName)
+	cmd := exec.Command("tar", "-cvzf", tarPath, src)
+	if err := cmd.Run(); err != nil {
 		fmt.Println(os.Stderr, "Error running tar command:", err)
-        return err
-    }
+		return err
+	}
 
-    //return removeOldBackups(dest, number)
+	//return removeOldBackups(dest, number)
 	return nil
 }
 
 func removeOldBackups(dest string, number int) error {
-    files, err := filepath.Glob(filepath.Join(dest, "*.tgz"))
-    if err != nil {
-        return err
-    }
+	files, err := filepath.Glob(filepath.Join(dest, "*.tgz"))
+	if err != nil {
+		return err
+	}
 
-    if len(files) <= number {
-        return nil
-    }
+	if len(files) <= number {
+		return nil
+	}
 
-    sort.Slice(files, func(i, j int) bool {
-        return files[i] < files[j]
-    })
+	sort.Slice(files, func(i, j int) bool {
+		return files[i] < files[j]
+	})
 
-    for _, file := range files[:len(files)-number] {
-        if err := os.Remove(file); err != nil {
-            return err
-        }
-    }
+	for _, file := range files[:len(files)-number] {
+		if err := os.Remove(file); err != nil {
+			return err
+		}
+	}
 
-    return nil
+	return nil
 }
